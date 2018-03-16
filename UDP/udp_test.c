@@ -189,15 +189,10 @@ int32_t mss_loopback_test_udp(uint8_t sn, uint8_t* buf, uint16_t port, uint16_t 
                     printf("%d: recvfrom error. %ld\r\n",sn, ret);
                     return ret;
                 }
-                printf("%d: recv : %s", sn, buf);
+                printf("RX_RD = %d, RXRD = %d\r\n",getSn_RX_RD(0),getSn_RX_WR(0));
+              //  printf("%d: recv : %s", sn, buf);
 
                 printf("%d:peer - %d.%d.%d.%d : %d\r\n",sn, destip[0], destip[1], destip[2], destip[3], destport);
-
-                if(strstr( buf, "end" ))
-                {
-                    close(sn);
-                    return 2;
-                }
 
                 ret = sendto(sn, buf, size-8, destip, destport);
                 if(ret < 0)
@@ -206,18 +201,20 @@ int32_t mss_loopback_test_udp(uint8_t sn, uint8_t* buf, uint16_t port, uint16_t 
                     return ret;
                 }
             }
+
             break;
         case SOCK_CLOSED:
 
 
+
             printf("%d:MSS Test UDP start\r\n",sn);
-            setSn_MSSR(sn, mss_size);
+            setSn_MSSR(sn, mss_size);;
             if((ret = socket(sn, Sn_MR_UDP, port, 0x00)) != sn)
-            return ret;
-
+            return ret;
             printf("%d:Current MSS Size : %d\r\n", sn, getSn_MSSR(sn));
-
+            printf("%d:setMSS\r\n",mss_size);
             printf("%d:Opened, MSS Test UDP, port [%d]\r\n", sn, port);
+
 
             break;
         default :
@@ -801,4 +798,56 @@ int32_t max_send_test_udp(uint8_t sn, uint8_t* buf, uint16_t port, uint16_t max_
             break;
     }
     return 1;
+}
+int32_t mss_loopback_test_udp_e(uint8_t sn, uint8_t* buf, uint16_t port,uint16_t mss)
+{
+   int32_t  ret;
+   uint16_t size, sentsize;
+   uint8_t  destip[4];
+   uint16_t destport;
+
+   switch(getSn_SR(sn))
+   {
+      case SOCK_UDP :
+         if((size = getSn_RX_RSR(sn)) > 0)
+         ;
+            if(size >= DATA_BUF_SIZE) size = DATA_BUF_SIZE;
+                ret = recvfrom(sn, buf, size, destip, (uint16_t*)&destport);
+            if(ret <= 0)
+            {
+
+               return ret;
+            }
+            size = (uint16_t) ret;
+            sentsize = 0;
+           printf("%d : RX Size\r\n",getSn_RX_RSR(sn));
+             while(sentsize != size)
+            {
+               ret = sendto(sn, buf+sentsize, size-sentsize, destip, destport);
+               if(ret < 0)
+               {
+
+                  return ret;
+               }
+               sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
+ 
+
+         }
+         break;
+      case SOCK_CLOSED:
+    	//  setSn_MSSR(sn,mss);
+    	           if((ret = socket(sn, Sn_MR_UDP, port, 0x00)) != sn)
+            return ret;
+
+         printf("%d:Opened, UDP loopback, port [%d]\r\n", sn, port);
+         printf("%d:Current MSS Size : %d\r\n", sn, getSn_MSSR(sn));
+         printf("%d:setMSS\r\n",mss);
+         printf("%d:Opened, MSS Test UDP, port [%d]\r\n", sn, port); 
+
+
+         break;
+      default :
+         break;
+   }
+   return 1;
 }

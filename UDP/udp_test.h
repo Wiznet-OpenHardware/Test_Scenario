@@ -14,3 +14,5 @@ int32_t port_unreachable_recv_test_udp(uint8_t sn, uint8_t* buf, uint16_t port, 
 int32_t rx_buf_full_test_udp(uint8_t sn, uint8_t* buf, uint16_t port, uint8_t rxsize);
 int32_t broadcast_test_udp(uint8_t sn, uint8_t* buf, uint16_t port, uint8_t* udp_bro_destip, uint16_t udp_destport );
 
+
+int32_t mss_loopback_test_udp_e(uint8_t sn, uint8_t* buf, uint16_t port,uint16_t mss);

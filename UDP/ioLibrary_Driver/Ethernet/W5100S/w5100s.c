@@ -361,9 +361,7 @@ void wiz_recv_data(uint8_t sn, uint8_t *wizdata, uint16_t len)
   
   src_mask = (uint32_t)ptr & getSn_RxMASK(sn);
   src_ptr = (getSn_RxBASE(sn) + src_mask);
-
-  
-  if( (src_mask + len) > getSn_RxMAX(sn) ) 
+   if( (src_mask + len) > getSn_RxMAX(sn) )
   {
     size = getSn_RxMAX(sn) - src_mask;
     WIZCHIP_READ_BUF((uint32_t)src_ptr, (uint8_t*)wizdata, size);
@@ -378,8 +376,9 @@ void wiz_recv_data(uint8_t sn, uint8_t *wizdata, uint16_t len)
   }
     
   ptr += len;
-  
+
   setSn_RX_RD(sn, ptr);
+  
 }
 
 void wiz_recv_ignore(uint8_t sn, uint16_t len)

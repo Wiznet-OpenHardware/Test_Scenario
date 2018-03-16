@@ -1,0 +1,77 @@
+
+
+///////////////////////////////////////////////////////
+/////////// UDP01 0-N byte Send TEST//////////////////////
+//////////////////////////////////////////////////////
+	 do{
+		status1 =zero_byte_send_test_udp(0, data_buf, 5000, udp_dest_ip, udp_dest_port, 5000);
+		if(status1 == -1) break;
+	}while(status1 != 2);
+
+	for(i=1;i<2048 ;i++){
+		printf("%d byte test\r\n",i);
+	   one_to_xxxxbyte_send_test_udp(0, data_buf, 5000, udp_dest_ip, udp_dest_port,i );
+	}
+/////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////
+/////////// UDP02 Max Socket Size Data Send TEST//////////////////////
+//////////////////////////////////////////////////////
+	for(i=0;i<=3;i++){
+	 do{
+		status1 = maximum_send_test_udp(0, data_buf, 5000, udp_dest_ip, udp_dest_port,pow(2,i));
+		if(status1 == -1) break;
+	}while(status1 != 2);
+	}
+	
+///////////////////////////////////////////////////////
+/////////// UDP03 Max Socket Size Data Send TEST//////////////////////
+//////////////////////////////////////////////////////
+uint8_t mss[4]={0,1,100,400};
+	for(i=0;i<=3;i++){
+	 do{
+		status1 =mss_loopback_test_udp(0, data_buf, 5000, mss[i] );
+		if(status1 == -1) break;
+	}while(status1 != 2);
+}
+/////////////////////////////////////////////////////
+/////////// UDP05-01 Port Unreachable Packet Send TEST//////////////
+/////////////////////////////////////////////////////
+      setMR2(getMR2() | MR2_UDPURB);
+
+
+ /////////////////////////////////////////////////////
+/////////// UDP05-02 Port Unreachable Packet Recv TEST//////////////
+/////////////////////////////////////////////////////
+	uint8_t test_buf[]={"port unreachable test"};
+	uint8_t udp_destip[4] = {192,168,0,200};
+	uint16_t udp_destport = 5000;
+	uint16_t port = 3000;
+	 uint8_t unreachable_ip[4];
+
+while(1){
+	   switch(getSn_SR(0))
+	    {
+
+	        case SOCK_CLOSED:
+	            socket(0, Sn_MR_UDP, port, 0x00);
+	            setIMR(IR_UNREACH);
+	            printf("------------------------4-------------------------------------\r\n");
+	            printf("1getSn_SR(0) = %x\r\n",getSn_SR(0));
+
+	            break;
+	        case SOCK_UDP:
+	        	printf("2getSn_SR(0) = %x\r\n",getSn_SR(0));
+	            sendto(0, test_buf, sizeof(test_buf), udp_destip, udp_destport);
+	            while(!getIR());
+	                        getUIPR(unreachable_ip);
+	                        printf("Unreachable IP - %d.%d.%d.%d\r\n",unreachable_ip[0], unreachable_ip[1], unreachable_ip[2], unreachable_ip[3]);
+	                        printf("Unreachable port - %d\r\n",getUPORTR());
+	                        printf("getIR = %x\r\n",getIR());
+	                        printf("------------------------------------------------------------------------------------");
+	            break;
+
+	    }
+}
+
+

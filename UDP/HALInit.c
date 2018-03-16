@@ -1,4 +1,4 @@
-#include "HAL_Config.h"
+#include "config.h"
 
 #include "HALInit.h"
 #include "misc.h"

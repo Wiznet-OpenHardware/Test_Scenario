@@ -523,7 +523,6 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
    uint8_t tmp = 0;
    uint16_t freesize = 0;
    uint32_t taddr;
-
    CHECK_SOCKNUM();
    switch(getSn_MR(sn) & 0x0F)
    {
@@ -762,9 +761,11 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
       while(1)
       {
          pack_len = getSn_RX_RSR(sn);
+         printf("%d : 11RX Size\r\n",getSn_RX_RSR(sn));
          if(getSn_SR(sn) == SOCK_CLOSED) return SOCKERR_SOCKCLOSED;
          if( (sock_io_mode & (1<<sn)) && (pack_len == 0) ) return SOCK_BUSY;
          if(pack_len != 0) break;
+
       };
    }
 //D20150601 : Move it to bottom
@@ -824,6 +825,7 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
 			// Need to packet length check (default 1472)
 			//
    		wiz_recv_data(sn, buf, pack_len); // data copy.
+
 			break;
 	   case Sn_MR_MACRAW :
 	      if(sock_remained_size[sn] == 0)
