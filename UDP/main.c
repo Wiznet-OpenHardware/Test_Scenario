@@ -135,6 +135,7 @@ int main(void)
 	uint8_t bLink = 0;
 
 	uint8_t uart_menu;
+	int ret;
 
 	for(i=0; i<ETH_MAX_BUF_SIZE; i=i+1) {
 
@@ -217,14 +218,9 @@ int main(void)
 	for(i = 0 ; i < 2000 ; i++);
 
 	resetDeassert();
+	ret = wiz_mdio_read(0x01);
+	while(ret&0x04)
 
-	for(i = 0 ; i < 200 ; i++)
-
-	{
-
-		for( j = 0 ; j < 10000 ; j++){}
-
-	}
 
 
 
@@ -254,15 +250,8 @@ int main(void)
 
 
 
-	for(i = 0 ; i < 1000 ; i++)
 
-	{
-
-		for( j = 0 ; j < 5000 ; j++){}
-
-	}
-
-	printf(" PHYMODE:%02x\r\n",getPHYSR());
+	printf(" PHYMODE:%02x\r\n",getPHYACR());
 
 	printf(" CHIP Version: %02x\r\n", getVER());
 
@@ -275,19 +264,59 @@ int main(void)
 	printf("Register value after W5100S initialize!\r\n");
 
 	print_network_information();
-
-	/*while(1){
+/*
+	while(1){
 
 		loopback_udps(0, data_buf, 5000);
 
 	}
 
-	*/
+*/
 
+	printf("================================\r\n");
+	printf("arp timeout test\r\n");
+	printf("================================\r\n");
+/*
+	do{
+		status1 = arp_timeout_udp(0, data_buf, 5000, arp_timeout_ip,6000, 5);
+		if(status1 == -1) break;
+	}while(status1 != 2);
+*/
 ///////////////////////////////////////////////////////
 /////////// Enter TEST Scenario //////////////////////
 //////////////////////////////////////////////////////
+uint8_t test_buf[]={"multicast Test"};
+		uint8_t udp_destip[4] = {192,168,0,111};
+		uint16_t udp_destmac[6] = {0xFF,0xAA,0x14,0xE7,0x77,0xBF};
+		uint16_t udp_destport = 5000;
+		uint16_t port = 3000;
+		uint8_t dst_ip[4];
+		uint8_t dst_mac[6];
 
+
+
+		while(1){
+			   switch(getSn_SR(0))
+			    {
+			        case SOCK_CLOSED:
+			        	setSn_IMR(0,0xff);
+			        	ret = socket(0, Sn_MR_UDP , port, 0x00);
+			        	printf("ret = %d\r\n",ret);
+			        	if(ret == -1) break;
+
+			            break;
+			        case SOCK_UDP:
+			            ret = sendto(0, test_buf, sizeof(test_buf), udp_destip, udp_destport);
+			        	if(ret < 0)
+			            {
+			                printf("%d: sendto error. %ld\r\n",0, ret);
+			                close(0);
+			                return 2;
+			            }
+			            break;
+
+			    }
+		}
 
 /////////////////////////////////////////////////////////////////
 

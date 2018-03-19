@@ -300,6 +300,7 @@ int32_t arp_timeout_udp(uint8_t sn, uint8_t* buf, uint16_t port, uint8_t* udp_ar
             printf("Current Retry Count : %d\r\n", getRCR());
 
             printf("%d:Opened, ARP Timeout Test UDP, port [%d]\r\n", sn, port);
+            delay_ms(5000);
 
             break;
         default :

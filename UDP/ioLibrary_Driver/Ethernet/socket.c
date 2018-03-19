@@ -761,7 +761,6 @@ int32_t recvfrom(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16
       while(1)
       {
          pack_len = getSn_RX_RSR(sn);
-         printf("%d : 11RX Size\r\n",getSn_RX_RSR(sn));
          if(getSn_SR(sn) == SOCK_CLOSED) return SOCKERR_SOCKCLOSED;
          if( (sock_io_mode & (1<<sn)) && (pack_len == 0) ) return SOCK_BUSY;
          if(pack_len != 0) break;

@@ -56,9 +56,6 @@ while(1){
 	        case SOCK_CLOSED:
 	            socket(0, Sn_MR_UDP, port, 0x00);
 	            setIMR(IR_UNREACH);
-	            printf("------------------------4-------------------------------------\r\n");
-	            printf("1getSn_SR(0) = %x\r\n",getSn_SR(0));
-
 	            break;
 	        case SOCK_UDP:
 	        	printf("2getSn_SR(0) = %x\r\n",getSn_SR(0));
@@ -73,5 +70,66 @@ while(1){
 
 	    }
 }
+ /////////////////////////////////////////////////////
+/////////// UDP06 broadcast//////////////
+/////////////////////////////////////////////////////
+	uint8_t test_buf[]={"broadcast Test"};
+	uint8_t udp_destip[4] = {255,255,255,255};//{192,168,0,200};
+	uint16_t udp_destport = 5000;
+	uint16_t port = 3000;
+	uint8_t dst_ip[4];
+	uint8_t dst_mac[6];
 
 
+	while(1){
+		   switch(getSn_SR(0))
+		    {
+		        case SOCK_CLOSED:
+		        	//setSn_MR(0,getSn_MR(0)|0x80);
+
+		            socket(0, Sn_MR_UDP, port, 0x00);
+		            break;
+		        case SOCK_UDP:
+		          	printf("getSn_SR(0) = %x\r\n",getSn_SR(0));
+		            sendto(0, test_buf, sizeof(test_buf-1), udp_destip, udp_destport);
+		            getSn_DIPR(0,dst_ip);
+		            getSn_DHAR(0,dst_mac);
+		            printf("Dst_addr = %d,%d,%d,%d\r\n",dst_ip[0],dst_ip[1],dst_ip[2],dst_ip[3]);
+		            printf(" Dst_Mac = %x:%x:%x:%x:%x:%x\r\n",dst_mac[0],dst_mac[1],dst_mac[2],dst_mac[3],dst_mac[4],dst_mac[5]);
+		            while(1);
+		            break;
+
+		    }
+	}
+	 /////////////////////////////////////////////////////
+/////////// UDP06 multicast//////////////
+/////////////////////////////////////////////////////
+uint8_t test_buf[]={"multicast Test"};
+	uint8_t udp_destip[4] = {192,168,0,200};
+	uint16_t udp_destmac[6] = {0xFF,0xAA,0x14,0xE7,0x77,0xBF};
+	uint16_t udp_destport = 5000;
+	uint16_t port = 3000;
+	uint8_t dst_ip[4];
+	uint8_t dst_mac[6];
+
+
+	while(1){
+		   switch(getSn_SR(0))
+		    {
+		        case SOCK_CLOSED:
+		        	setSn_DIPR(0,udp_destport);
+		        	setSn_DHAR(0,udp_destmac);
+		        	setSn_DPORT(0,udp_destport);
+
+		            socket(0, Sn_MR_UDP | Sn_MR_MULTI, port, 0x00);
+		            break;
+		        case SOCK_UDP:
+		        	printf("getSn_SR(0) = %x\r\n",getSn_SR(0));
+		            sendto(0, test_buf, sizeof(test_buf), udp_destip, udp_destport);
+		            printf("Dst_addr = %d,%d,%d,%d\r\n",dst_ip[0],dst_ip[1],dst_ip[2],dst_ip[3]);
+		    		printf(" Dst_Mac = %x:%x:%x:%x:%x:%x\r\n",dst_mac[0],dst_mac[1],dst_mac[2],dst_mac[3],dst_mac[4],dst_mac[5]);
+
+		            break;
+
+		    }
+	}

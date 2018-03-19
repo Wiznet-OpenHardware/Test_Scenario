@@ -412,6 +412,7 @@ uint16_t wiz_mdio_read(uint8_t PHYMDIO_regadr)
 	while(getPHYACR() != 0){
 		//Wait until command executed.
 	}
+	printf("11 = %x\r\n",getPHYDOR());
 	return getPHYDOR();
 }
 

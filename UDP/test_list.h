@@ -66,7 +66,7 @@ uint8_t macraw_dest_ip[4] = {192,168,0,200};
 
 uint8_t ipraw_dest_mac[6]={0x08,0x62,0x66,0x2a,0xce,0xe3};
 
-uint8_t arp_timeout_ip[4]={192,168,0,5};
+uint8_t arp_timeout_ip[4]={192,168,0,111};
 
 uint8_t udp_bro_dest_ip[4] = {255, 255, 255, 255};
 
