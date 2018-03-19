@@ -1,0 +1,36 @@
+#include "stm32f4xx_rcc.h"
+
+#define PRINTF_USART			USART1
+#define PRINTF_USART_RCC		RCC_APB2Periph_USART1
+#define PRINTF_USART_TX_PIN		GPIO_Pin_9
+#define PRINTF_USART_TX_PORT	GPIOA
+#define PRINTF_USART_RX_PIN		GPIO_Pin_10
+#define PRINTF_USART_RX_PORT	GPIOA
+
+#define W5100S_GPIO_RCC			RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOD | RCC_AHB1Periph_GPIOE | RCC_AHB1Periph_GPIOF
+#define W5100S_RESET_PIN		GPIO_Pin_11  //FPGA
+#define W5100S_RESET_PORT		GPIOD
+//#define W5100S_RESET_PIN		GPIO_Pin_8	//ASIC
+//#define W5100S_RESET_PORT		GPIOC
+#define W5100S_CS_PIN			GPIO_Pin_7
+#define W5100S_CS_PORT			GPIOD
+#define W5100S_INT_PIN			GPIO_Pin_14
+#define W5100S_INT_PORT			GPIOC
+
+#define W5100S_SPI				SPI1
+#define W5100S_SPI_RCC			RCC_APB2Periph_SPI1
+#define W5100S_SPI_PORT			GPIOB
+
+#define W5100S_SPI_SCK_PIN		GPIO_Pin_3
+#define W5100S_SPI_MOSI_PIN		GPIO_Pin_4
+#define W5100S_SPI_MISO_PIN		GPIO_Pin_5
+
+#define SPI_ENABLE_Port         GPIOF
+#define SPI_ENABLE_Pin          GPIO_Pin_14
+
+#define SPI_SEL_Port			GPIOE
+#define SPI_SEL1_Pin			GPIO_Pin_12
+#define SPI_SEL0_Pin			GPIO_Pin_13
+
+
+

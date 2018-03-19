@@ -1,0 +1,135 @@
+
+
+///////////////////////////////////////////////////////
+/////////// UDP01 0-N byte Send TEST//////////////////////
+//////////////////////////////////////////////////////
+	 do{
+		status1 =zero_byte_send_test_udp(0, data_buf, 5000, udp_dest_ip, udp_dest_port, 5000);
+		if(status1 == -1) break;
+	}while(status1 != 2);
+
+	for(i=1;i<2048 ;i++){
+		printf("%d byte test\r\n",i);
+	   one_to_xxxxbyte_send_test_udp(0, data_buf, 5000, udp_dest_ip, udp_dest_port,i );
+	}
+/////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////
+/////////// UDP02 Max Socket Size Data Send TEST//////////////////////
+//////////////////////////////////////////////////////
+	for(i=0;i<=3;i++){
+	 do{
+		status1 = maximum_send_test_udp(0, data_buf, 5000, udp_dest_ip, udp_dest_port,pow(2,i));
+		if(status1 == -1) break;
+	}while(status1 != 2);
+	}
+	
+///////////////////////////////////////////////////////
+/////////// UDP03 Max Socket Size Data Send TEST//////////////////////
+//////////////////////////////////////////////////////
+uint8_t mss[4]={0,1,100,400};
+	for(i=0;i<=3;i++){
+	 do{
+		status1 =mss_loopback_test_udp(0, data_buf, 5000, mss[i] );
+		if(status1 == -1) break;
+	}while(status1 != 2);
+}
+/////////////////////////////////////////////////////
+/////////// UDP05-01 Port Unreachable Packet Send TEST//////////////
+/////////////////////////////////////////////////////
+      setMR2(getMR2() | MR2_UDPURB);
+
+
+ /////////////////////////////////////////////////////
+/////////// UDP05-02 Port Unreachable Packet Recv TEST//////////////
+/////////////////////////////////////////////////////
+	uint8_t test_buf[]={"port unreachable test"};
+	uint8_t udp_destip[4] = {192,168,0,200};
+	uint16_t udp_destport = 5000;
+	uint16_t port = 3000;
+	 uint8_t unreachable_ip[4];
+
+while(1){
+	   switch(getSn_SR(0))
+	    {
+
+	        case SOCK_CLOSED:
+	            socket(0, Sn_MR_UDP, port, 0x00);
+	            setIMR(IR_UNREACH);
+	            break;
+	        case SOCK_UDP:
+	        	printf("2getSn_SR(0) = %x\r\n",getSn_SR(0));
+	            sendto(0, test_buf, sizeof(test_buf), udp_destip, udp_destport);
+	            while(!getIR());
+	                        getUIPR(unreachable_ip);
+	                        printf("Unreachable IP - %d.%d.%d.%d\r\n",unreachable_ip[0], unreachable_ip[1], unreachable_ip[2], unreachable_ip[3]);
+	                        printf("Unreachable port - %d\r\n",getUPORTR());
+	                        printf("getIR = %x\r\n",getIR());
+	                        printf("------------------------------------------------------------------------------------");
+	            break;
+
+	    }
+}
+ /////////////////////////////////////////////////////
+/////////// UDP06 broadcast//////////////
+/////////////////////////////////////////////////////
+	uint8_t test_buf[]={"broadcast Test"};
+	uint8_t udp_destip[4] = {255,255,255,255};//{192,168,0,200};
+	uint16_t udp_destport = 5000;
+	uint16_t port = 3000;
+	uint8_t dst_ip[4];
+	uint8_t dst_mac[6];
+
+
+	while(1){
+		   switch(getSn_SR(0))
+		    {
+		        case SOCK_CLOSED:
+		        	//setSn_MR(0,getSn_MR(0)|0x80);
+
+		            socket(0, Sn_MR_UDP, port, 0x00);
+		            break;
+		        case SOCK_UDP:
+		          	printf("getSn_SR(0) = %x\r\n",getSn_SR(0));
+		            sendto(0, test_buf, sizeof(test_buf-1), udp_destip, udp_destport);
+		            getSn_DIPR(0,dst_ip);
+		            getSn_DHAR(0,dst_mac);
+		            printf("Dst_addr = %d,%d,%d,%d\r\n",dst_ip[0],dst_ip[1],dst_ip[2],dst_ip[3]);
+		            printf(" Dst_Mac = %x:%x:%x:%x:%x:%x\r\n",dst_mac[0],dst_mac[1],dst_mac[2],dst_mac[3],dst_mac[4],dst_mac[5]);
+		            while(1);
+		            break;
+
+		    }
+	}
+	 /////////////////////////////////////////////////////
+/////////// UDP06 multicast//////////////
+/////////////////////////////////////////////////////
+uint8_t test_buf[]={"multicast Test"};
+		uint8_t udp_destip[4] = {192,168,0,111};
+		uint16_t udp_destmac[6] = {0xFF,0xAA,0x14,0xE7,0x77,0xBF};
+		uint16_t udp_destport = 5000;
+		uint16_t port = 3000;
+		uint8_t dst_ip[4];
+		uint8_t dst_mac[6];
+
+
+
+		while(1){
+			   switch(getSn_SR(0))
+			    {
+			        case SOCK_CLOSED:
+			        	setSn_IMR(0,0xff);
+			        	ret = socket(0, Sn_MR_UDP , port, 0x00);
+			            break;
+			        case SOCK_UDP:
+			            ret = sendto(0, test_buf, sizeof(test_buf), udp_destip, udp_destport);
+			        	if(ret < 0)
+			            {
+			                printf("%d: sendto error. %ld\r\n",0, ret);
+			                close(0);
+			                return 2;
+			            }
+			            break;
+
+			    }
+		}
