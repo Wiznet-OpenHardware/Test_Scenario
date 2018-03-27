@@ -150,7 +150,7 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
 
    	      break;
    	   case Sn_MR_UDP:
-   	      if(flag & SF_IGMP_VER2)
+   	      if(flag & SF_IGMP_VER1)
    	      {
    	         if((flag & SF_MULTI_ENABLE)==0) return SOCKERR_SOCKFLAG;
    	      }
@@ -332,6 +332,7 @@ int32_t send(uint8_t sn, uint8_t * buf, uint16_t len)
 
       //while(!(getSn_IR(sn) & Sn_IR_SENDOK)) printf(".");
       tmp = getSn_IR(sn);
+
       if(tmp & Sn_IR_SENDOK)
       {
          setSn_IR(sn, Sn_IR_SENDOK);
@@ -346,6 +347,7 @@ int32_t send(uint8_t sn, uint8_t * buf, uint16_t len)
             }
          #endif
          sock_is_sending &= ~(1<<sn);         
+
       }
       else if(tmp & Sn_IR_TIMEOUT)
       {
@@ -392,7 +394,7 @@ int32_t send(uint8_t sn, uint8_t * buf, uint16_t len)
    #if _WIZCHIP_ == W5300
       setSn_TX_WRSR(sn,len);
    #endif
-   
+
    setSn_CR(sn,Sn_CR_SEND);
    //printf("send command!\r\n");
    /* wait to process the command... */
@@ -535,6 +537,7 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
          return SOCKERR_SOCKMODE;
    }
    CHECK_SOCKDATA();
+
    //M20140501 : For avoiding fatal error on memory align mismatched
    //if(*((uint32_t*)addr) == 0) return SOCKERR_IPINVALID;
    //{
@@ -568,7 +571,9 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
       if( (sock_io_mode & (1<<sn)) && (len > freesize) ) return SOCK_BUSY;
       if(len <= freesize) break;
    };
+
 	wiz_send_data(sn, buf, len);
+
 
    #if _WIZCHIP_ < W5500   //M20150401 : for WIZCHIP Errata #4, #5 (ARP errata)
       getSIPR((uint8_t*)&taddr);
@@ -586,16 +591,24 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
 #endif
 //   
 	setSn_CR(sn,Sn_CR_SEND);
+
 	/* wait to process the command... */
 	while(getSn_CR(sn));
+	WIZCHIP_WRITE(0x88, 0xff);
+
+
    while(1)
    {
+
       tmp = getSn_IR(sn);
       if(tmp & Sn_IR_SENDOK)
       {
          setSn_IR(sn, Sn_IR_SENDOK);
+
          break;
       }
+
+
       //M:20131104
       //else if(tmp & Sn_IR_TIMEOUT) return SOCKERR_TIMEOUT;
       else if(tmp & Sn_IR_TIMEOUT)
@@ -607,8 +620,10 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
          #if _WIZCHIP_ < W5500   //M20150401 : for WIZCHIP Errata #4, #5 (ARP errata)
             if(taddr) setSUBR((uint8_t*)&taddr);
          #endif
+
          return SOCKERR_TIMEOUT;
       }
+
       ////////////
    }
    #if _WIZCHIP_ < W5500   //M20150401 : for WIZCHIP Errata #4, #5 (ARP errata)
@@ -616,6 +631,7 @@ int32_t sendto(uint8_t sn, uint8_t * buf, uint16_t len, uint8_t * addr, uint16_t
    #endif
    //M20150409 : Explicit Type Casting
    //return len;
+
 
    return (int32_t)len;
 }

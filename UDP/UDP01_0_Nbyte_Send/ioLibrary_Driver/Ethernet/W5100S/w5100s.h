@@ -369,7 +369,7 @@
  * @brief PHY status register
  * @details \reg
  */
-#define PHYSR				(_W5100S_IO_BASE_ + (0x003C))
+#define PHYSR0				(_W5100S_IO_BASE_ + (0x003C))
 
 /*
  * @ingroup Common_register_group_W5100S
@@ -519,21 +519,21 @@
  * @brief Chip Configuration locking register
  * @details \reg
  */
-#define CHIPLCKR				(_W5100S_IO_BASE_ + (0x0070))
+#define CHIPCFGR				(_W5100S_IO_BASE_ + (0x0070))
 
 /*
  * @ingroup Common_register_group_W5100S
  * @brief Network Configuration locking register
  * @details \reg
  */
-#define NETLCKR				(_W5100S_IO_BASE_ + (0x0071))
+#define NETCFGR				(_W5100S_IO_BASE_ + (0x0071))
 
 /*
  * @ingroup Common_register_group_W5100S
  * @brief PHY Configuration locking register
  * @details \reg
  */
-#define PHYLCKR				(_W5100S_IO_BASE_ + (0x0072))
+#define PHYCFGR				(_W5100S_IO_BASE_ + (0x0072))
 
 /*
  * @ingroup Common_register_group_W5100S
@@ -2038,8 +2038,8 @@ void     WIZCHIP_WRITE_BUF(uint32_t AddrSel, uint8_t* pBuf, uint16_t len);
 #define getPMRUR() \
 		(((uint16_t)WIZCHIP_READ(PMRUR) << 8) + WIZCHIP_READ(PMRUR+1))
 
-#define getPHYSR()	\
-		WIZCHIP_READ(PHYSR)
+#define getPHYSR0()	\
+		WIZCHIP_READ(PHYSR0)
 
 #define getPHYSR1()	\
 		WIZCHIP_READ(PHYSR1)
@@ -2179,25 +2179,34 @@ void     WIZCHIP_WRITE_BUF(uint32_t AddrSel, uint8_t* pBuf, uint16_t len);
 /*Clock lock/unlock*/
 
 #define CHIPLOCK()	\
-		WIZCHIP_WRITE(CHIPLCKR,0xff)
+		WIZCHIP_WRITE(CHIPCFGR,0xff)
 
 #define CHIPUNLOCK()	\
-		WIZCHIP_WRITE(CHIPLCKR,0xCE)
+		WIZCHIP_WRITE(CHIPCFGR,0xCE)
 
 /*Network information lock/unlock*/
 #define NETLOCK()	\
-		WIZCHIP_WRITE(NETLCKR,0x3A)
+		WIZCHIP_WRITE(NETCFGR,0x3A)
 
 #define NETUNLOCK()	\
-		WIZCHIP_WRITE(NETLCKR,0xC5)
+		WIZCHIP_WRITE(NETCFGR,0xC5)
 
 /*PHY CR0,CR1 lock/unlock*/
 #define PHYLOCK()	\
-		WIZCHIP_WRITE(PHYLCKR,0xff)
+		WIZCHIP_WRITE(PHYCFGR,0xff)
 
 #define PHYUNLOCK()	\
-		WIZCHIP_WRITE(PHYLCKR,0x53)
+		WIZCHIP_WRITE(PHYCFGR,0x53)
+/*CFG registers*/
 
+#define setCHIPCFGR(chipcfgr)	\
+		WIZCHIP_WRITE(CHIPCFGR,chipcfgr)
+
+#define setNETCFGR(NETCFGR)	\
+		WIZCHIP_WRITE(NETCFGR,NETCFGR)
+
+#define setPHYCFGR(var)	\
+		WIZCHIP_WRITE(PHYCFGR,var)
 /**
  * @ingroup Version register_access_function_W5100SS
  * @brief Get version information.

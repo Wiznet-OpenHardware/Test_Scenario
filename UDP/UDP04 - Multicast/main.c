@@ -19,6 +19,7 @@
 #include "W5100SRelFunctions.h"
 
 #include "socket.h"
+#include "w5100s.h"
 
 #include "HALInit.h"
 
@@ -92,7 +93,7 @@ unsigned char ethBuf3[ETH_MAX_BUF_SIZE];
 
 
 
-
+static uint16_t dbg_count;
 
 
 
@@ -119,7 +120,196 @@ void ExitCris();
 
 
 unsigned char data_buf[2048];
+void set_phy_opmode(uint8_t auto_n, uint8_t spd_n, uint8_t dpx_n)
+{
+	volatile uint16_t i , j;
+	volatile unsigned long linktime;
+    volatile uint8_t linkstat;
 
+	uint8_t opmode, tphycr1;
+	opmode = (auto_n & 0x01);
+	opmode <<= 1;
+	opmode |= (spd_n & 0x01);
+	opmode <<= 1;
+	opmode |= (dpx_n & 0x01);
+
+	printf("\r\nopmode = %02X : %s %d %c\r\n",opmode, (auto_n) ? "Fix" : "Auto", spd_n ? 10:100,(dpx_n) ? 'H' : 'F');
+
+	//FSMCLowSpeed();
+	for(i = 0 ; i < 2000 ; i++);
+
+	while(getVER() != 0x51){printf("*"); for(i=0;i<1000;i++);};
+
+	setPHYCFGR(0x53);
+	setPHYCR0(opmode);
+
+#ifdef PHY_RETRY
+PHY_RESET_RETRY:
+#endif
+	tphycr1 = getPHYCR1();
+	setPHYCFGR(0x53);
+	setPHYCR1(tphycr1 | 0x01 );
+	while(getPHYCR1() & 0x01);
+	for(i = 0 ; i < 3000 ; i++); //200us
+//	while((getPHYCR1() & 0x01) == 0x00)
+//	{
+//		setPHYCR1(tphycr1 | 0x01);
+//	}
+	while(getPHYSR0() & 0x80);
+    //TIM2_settimer();
+	for(i = 0 ; i < 3000 ; i++); //200us
+	while( (getPHYSR0() & 0x01) != 0x01 )
+		{	//printf("test = %x\r\n",getPHYSR0());
+#ifdef PHY_RETRY
+		 if(TIM2_gettimer() > 100)
+		 {
+			 printf("Retry Phy config\r\n");
+			 goto PHY_RESET_RETRY;
+		 }
+#endif
+		}
+	linktime = TIM2_gettimer();
+	linkstat = getPHYSR0();
+	printf("\r\nPHY LINK OK : Stat %d%c, Time = %d.%d\r\n",
+			((linkstat >> 1) & 0x01) ? 10 : 100, ((linkstat >> 2) & 01) ? 'H' : 'F',
+			linktime/10, linktime % 10);
+	while(getVER() != 0x51)
+	{
+		printf("-");
+		for(i=0;i<1000;i++);
+	}
+	//FSMCHighSpeed();
+	for(i=0; i<2000; i++);
+	while(getVER() != 0x51)
+	{
+		printf("-");
+		for(i=0;i<1000;i++);
+	}
+
+}
+
+// auto_n : 0 - auto, 1 - fixed0
+// spd_n : 0 - 100M , 1 - 10M
+// dpx_n : 0 - FDX,   1 - HDX
+void set_phy_mdc(uint8_t auto_n, uint8_t spd_n, uint8_t dpx_n)
+{
+	volatile uint16_t i, j;
+	volatile unsigned long linktime;
+    volatile uint8_t linkstat;
+	uint16_t bmcr;
+//	wiz_mdio_write(0x00, 0x8000); // Reset;
+//	while(wiz_mdio_read(0x00) & 0x8000)
+//	{
+//		for(i=0; i<10000;i++);
+//	}
+	bmcr = wiz_mdio_read(0x00);
+	printf("bmcr=%04X\r\n", bmcr);
+	if(!auto_n)
+	{
+		bmcr = bmcr | (1 << 12);
+		bmcr = bmcr |  (1 << 13);
+		bmcr = bmcr |  (1<<8);
+	}
+	else
+	{
+
+		bmcr = bmcr & (~(1<<12));
+		if(spd_n) bmcr = bmcr & (~(1<<13));
+		else      bmcr = bmcr |  (1 << 13);
+		if(dpx_n) bmcr = bmcr & (~(1<<8));
+		else      bmcr = bmcr |  (1<<8);
+	}
+	printf("\r\BMCR = %04X : %s %d %c\r\n",bmcr, (auto_n) ? "Fix" : "Auto", spd_n ? 10:100,(dpx_n) ? 'H' : 'F');
+//	wiz_mdio_write(0x00, bmcr);
+	wiz_mdio_write(0x00, bmcr | 0x8000);
+	//wiz_mdio_read(0x00);
+	//while(getPHYSR0() & 0x01);
+	TIM2_settimer();
+	while(TIM2_gettimer() < 1);
+	//wiz_mdio_write(0x00, bmcr & ~0x8000);
+	//while(getPHYSR0() & 0x80);
+    TIM2_settimer();
+	while( (getPHYSR0() & 0x01) != 0x01 )
+		{
+#ifdef PHY_RETRY
+		 if(TIM2_gettimer() > 100)
+		 {
+			 printf("Retry Phy config\r\n");
+			 goto PHY_RESET_RETRY;
+		 }
+#endif
+		}
+	linktime = TIM2_gettimer();
+
+    linkstat = getPHYSR0();
+	printf("\r\nPHY LINK OK : Stat %d%c, Time = %d.%d\r\n",
+			((linkstat >> 1) & 0x01) ? 10 : 100, ((linkstat >> 2) & 01) ? 'H' : 'F',
+			linktime/10, linktime % 10);
+}
+
+//0 - Ethernet PHY Power up
+//1 - Ethernet PHY Power Down
+void set_phy_power_mode(uint8_t mode)
+{
+	volatile uint32_t i;
+
+	FSMCLowSpeed();
+	for(i = 0 ; i < 3000 ; i++);
+
+	while(getVER() != 0x51){printf("L"); for(i=0;i<1000;i++);};
+
+	// Power UP
+	if(!mode)
+	{
+		setPHYCFGR(0x53);
+		setPHYCR1(getPHYCR1() & ~(0x20));
+		for(i = 0 ; i < 3000 ; i++);
+		FSMCHighSpeed();
+		for(i = 0 ; i < 3000 ; i++);
+		while(getVER() != 0x51){printf("H"); for(i=0;i<1000;i++);};
+		printf("\r\nEthernet Power UP!!!!!\r\n");
+	}
+	else
+	{
+		setPHYCFGR(0x53);
+		setPHYCR1(getPHYCR1() | (0x20));
+		for(i = 0 ; i < 3000 ; i++);
+		while(getVER() != 0x51){printf("L"); for(i=0;i<1000;i++);};
+		printf("\r\nEthernet Power DOWN!!!!!\r\n");
+	}
+}
+
+//0 - System Clock 100MHz
+//1 - System Clock 25MHz
+void set_sysclock_mode(uint8_t mode)
+{
+	volatile uint32_t i;
+
+	FSMCLowSpeed();
+	for(i = 0 ; i < 3000 ; i++);
+
+	while(getVER() != 0x51){printf("L"); for(i=0;i<1000;i++);};
+
+	// 100MHz
+	if(!mode)
+	{
+		setCHIPCFGR(0xCE);
+		setMR2(getMR2() & ~(0x80));
+		for(i = 0 ; i < 3000 ; i++);
+		FSMCHighSpeed();
+		for(i = 0 ; i < 3000 ; i++);
+		while(getVER() != 0x51){printf("H"); for(i=0;i<1000;i++);};
+		printf("\r\nSystem Clock changed to 100MHz!!!!!\r\n");
+	}
+	else
+	{
+		setCHIPCFGR(0xCE);
+		setMR2(getMR2() | (0x80));
+		for(i = 0 ; i < 3000 ; i++);
+		while(getVER() != 0x51){printf("H"); for(i=0;i<1000;i++);};
+		printf("\r\nSystem Clock changed to 25MHz!!!!!\r\n");
+	}
+}
 
 
 int main(void)
@@ -218,9 +408,10 @@ int main(void)
 	for(i = 0 ; i < 2000 ; i++);
 
 	resetDeassert();
-	while(1){
-		if((getPHYSR()&0x01)==0x01)
-			break;
+
+	for(i = 0 ; i < 200 ; i++)
+	{
+		for( j = 0 ; j < 10000 ; j++){}
 	}
 
 
@@ -251,7 +442,35 @@ int main(void)
 
 #endif
 
+#define	PHY_AUTO
+#ifndef PHY_AUTO
+	setPHYCFGR(0x53);
+	setPHYCR0(0x07); // 10H
 
+	//setPHYCR0(0x06); // 10F
+	//setPHYCR0(0x04); // 100F
+	//setPHYCR0(0x05); //100H
+//	setPHYCR1(getPHYCR1()&0xfe);
+	uint8_t tphycr1 = getPHYCR1();
+	setPHYCR1(tphycr1 & 0xFE );
+	while(getPHYCR1() & 0x01);
+
+//	FSMCLowSpeed();
+	for(i = 0 ; i < 10000 ; i++)
+	{
+		for( j = 0 ; j < 10000 ; j++){}
+	}
+	while((getPHYCR1() & 0x01) == 0x00)
+	{
+		setPHYCFGR(0x53);
+		setPHYCR1(tphycr1 | 0x01);
+	}
+#endif
+	FSMCHighSpeed();
+	for(i = 0 ; i < 10000 ; i++)
+	{
+		for( j = 0 ; j < 5000 ; j++){}
+	}
 
 
 	printf(" PHYMODE:%02x\r\n",getPHYACR());
@@ -271,36 +490,92 @@ int main(void)
 ///////////////////////////////////////////////////////
 /////////// Enter TEST Scenario //////////////////////
 //////////////////////////////////////////////////////
+uint8_t test_buf[]={"ARP Test"};
 
-uint8_t test_buf[]={"multicast Test"};
-		uint8_t udp_destip[4] = {192,168,0,111};
-		uint16_t udp_destmac[6] = {0xFF,0xAA,0x14,0xE7,0x77,0xBF};
-		uint16_t udp_destport = 5000;
+		uint16_t  sentsize;
+		uint8_t destip[4] = {192,168,0,200};
+		uint8_t mcastmacv4[6] =  {0x01,0x00,0x5E,0x01,0x02,0x03};
+		uint16_t udp_destport = 3000;
 		uint16_t port = 3000;
 		uint8_t dst_ip[4];
 		uint8_t dst_mac[6];
 
-
+	    uint8_t mcastmacv4_check[6] = {0,};
+	    uint8_t udp_multi_dest_ip_check[4] = {239,1,2,3};
+	    uint16_t port_check=0;
+	
+		//WIZCHIP_WRITE(PHYLCKR,0x00);
+		//set_phy_opmode(1,1,0);
 
 		while(1){
 			   switch(getSn_SR(0))
 			    {
 			        case SOCK_CLOSED:
-			        	setSn_IMR(0,0xff);
-			        	ret = socket(0, Sn_MR_UDP , port, 0x00);
-			            break;
+
+			           setSn_DPORT(sn, port);
+					   setSn_DHAR( sn, mcastmacv4);
+					   setSn_DIPR(sn,udp_multi_dest_ip_check);
+					   printf("%d:Multicast Test UDP, Set MAC(DHAR), ",sn);
+
+					   printf("%d:Dest Group IP - %d.%d.%d.%d : %d\r\n",sn, udp_multi_dest_ip_check[0], udp_multi_dest_ip_check[1], udp_multi_dest_ip_check[2], udp_multi_dest_ip_check[3], port_check);
+					   printf("%d:Dest Group MAC - %x:%x:%x:%x:%x:%x\r\n",sn, mcastmacv4[0], mcastmacv4[1], mcastmacv4[2], mcastmacv4[3], mcastmacv4[4], mcastmacv4[5]);
+
+					   printf("%d:Opened, Test UDP, port [%d]\r\n", sn, port);
+					   printf("IGMPv1 Multicast Test UDP start\r\n");
+					                 if((ret = socket(sn, Sn_MR_UDP, port, SF_MULTI_ENABLE|SF_IGMP_VER1)) != sn)
+					                 return ret;
+					                 printf("%d: SN_MR: 0x%02x\r\n", sn, getSn_MR(sn));
+					                					   printf("%d: SN_MR2: 0x%02x\r\n", sn, getSn_MR2(sn));
+
+					   break;
 			        case SOCK_UDP:
-			            ret = sendto(0, test_buf, sizeof(test_buf), udp_destip, udp_destport);
-			        	if(ret < 0)
+
+
+			            if((size = getSn_RX_RSR(sn)) > 0)
 			            {
-			                printf("%d: sendto error. %ld\r\n",0, ret);
-			                close(0);
-			                return 2;
-			            }
+			                if(size > DATA_BUF_SIZE) size = DATA_BUF_SIZE;
+			                memset(data_buf, 0, DATA_BUF_SIZE);
+			                ret = recvfrom(sn, data_buf, size, udp_multi_dest_ip_check, (uint16_t*)&udp_destport);
+			                if(ret <= 0)
+			                {
+			                    printf("%d: recvfrom error. %ld\r\n",sn, ret);
+			                    return ret;
+			                }
+			                printf("%d:recv : %s\t",sn, data_buf);
+			                printf("%d:peer - %d.%d.%d.%d : %d\r\n",sn, udp_multi_dest_ip_check[0], udp_multi_dest_ip_check[1], udp_multi_dest_ip_check[2], udp_multi_dest_ip_check[3], udp_destport);
+			                if(strstr( data_buf, "end" ))
+			                {
+			                    close(sn);
+			                    printf("%d: SN_MR: 0x%02x\r\n", sn, getSn_MR(sn));
+			                    printf("%d: SN_MR2: 0x%02x\r\n", sn, getSn_MR2(sn));
+			                    return 2;
+			                }
+							size = (uint16_t) ret;
+							sentsize = 0;
+							while(sentsize != size)
+							{
+
+								ret = sendto(sn, data_buf+sentsize, size-sentsize, destip, udp_destport);
+								//printf("multicast sendto 2\r\n");
+								//ret |= sendto(sn, data_buf+sentsize, size-sentsize, udp_multi_dest_ip, port);
+								//printf("multicast sendto 3\r\n");
+								//ret |= sendto(sn, data_buf+sentsize, size-sentsize, test_dest_ip, test_dest_port);
+								printf("multicast sendto %d\r\n", ret);
+								if(ret < 0)
+								{
+									printf("%d: sendto error. %ld\r\n",sn, ret);
+									return ret;
+								}
+								sentsize += ret; // Don't care SOCKERR_BUSY, because it is zero.
+							}
+							//printf("%d: SN_MR: 0x%02x\r\n", sn, getSn_MR(sn));
+							//printf("%d: SN_MR2: 0x%02x\r\n", sn, getSn_MR2(sn));
+						}
 			            break;
 
 			    }
 		}
+
 /////////////////////////////////////////////////////////////////
 
 
@@ -371,14 +646,17 @@ void EXTI15_10_IRQHandler(void)
 
 		/* Do something */
 
-		printf("IR:%.2x, IR2:%.2x, SLIR:%.2x\r\n",getIR(), getIR2(), getSLIR() );
+		//printf("IR:%.2x, IR2:%.2x, SLIR:%.2x\r\n",getIR(), getIR2(), getSLIR() );
 
 		printf("S0_IR : %.2x, S1_IR : %.2x, S2_IR : %.2x, S3_IR : %.2x\r\n",getSn_IR(0),getSn_IR(1),getSn_IR(2),getSn_IR(3));
+		//printf("time =%d\r\n",(WIZCHIP_READ(0x82)<<8)|(WIZCHIP_READ(0x83)));
 
+		printf("PHYSR = %x\r\n",getPHYSR0());
 		EXTI_ClearFlag(EXTI_Line14);
 
 	}
-
+	//WIZCHIP_WRITE(0x88,0xff);
+	//printf("dbg_count = %d\r\n",dbg_count++);
 	printf("///////////////////////////////\r\n");
 
 

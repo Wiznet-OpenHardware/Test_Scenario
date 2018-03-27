@@ -150,7 +150,7 @@ int8_t socket(uint8_t sn, uint8_t protocol, uint16_t port, uint8_t flag)
 
    	      break;
    	   case Sn_MR_UDP:
-   	      if(flag & SF_IGMP_VER2)
+   	      if(flag & SF_IGMP_VER1)
    	      {
    	         if((flag & SF_MULTI_ENABLE)==0) return SOCKERR_SOCKFLAG;
    	      }

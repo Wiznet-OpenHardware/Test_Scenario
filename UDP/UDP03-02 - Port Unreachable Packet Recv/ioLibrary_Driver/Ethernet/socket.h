@@ -114,7 +114,7 @@
  * SOCKET FLAG
  */
 #define SF_ETHER_OWN           (Sn_MR_MFEN)        ///< In @ref Sn_MR_MACRAW, Receive only the packet as broadcast, multicast and own packet
-#define SF_IGMP_VER2           (Sn_MR_MC)          ///< In @ref Sn_MR_UDP with \ref SF_MULTI_ENABLE, Select IGMP version 2.   
+#define SF_IGMP_VER1           (Sn_MR_MC)          ///< In @ref Sn_MR_UDP with \ref SF_MULTI_ENABLE, Select IGMP version 1.
 #define SF_TCP_NODELAY         (Sn_MR_ND)          ///< In @ref Sn_MR_TCP, Use to nodelayed ack.
 #define SF_MULTI_ENABLE        (Sn_MR_MULTI)       ///< In @ref Sn_MR_UDP, Enable multicast mode.
 

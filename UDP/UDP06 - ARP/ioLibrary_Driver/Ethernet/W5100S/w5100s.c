@@ -394,27 +394,21 @@ void wiz_recv_ignore(uint8_t sn, uint16_t len)
 //todo comment needed
 void wiz_mdio_write(uint8_t PHYMDIO_regadr, uint16_t var)
 {
-	//set the address to write
-	setPHYRR(PHYMDIO_regadr);
-	//set the data to write
-	setPHYDIR(var);
-	//write command
-	setPHYACR(PHYACR_WRITE);
-
-	while(getPHYACR() != 0){} //wait until command executed.
+		WIZCHIP_WRITE(PHYRR,PHYMDIO_regadr);
+		WIZCHIP_WRITE(PHYDIR, (uint8_t)(var >> 8));
+		WIZCHIP_WRITE(PHYDIR+1, (uint8_t)(var));
+		WIZCHIP_WRITE(PHYACR, PHYACR_WRITE);
+		while(WIZCHIP_READ(PHYACR));	//wait for command complete
 }
-
 
 uint16_t wiz_mdio_read(uint8_t PHYMDIO_regadr)
 {
-	setPHYRR(PHYMDIO_regadr);
-	setPHYACR(PHYACR_READ);
-	while(getPHYACR() != 0){
-		//Wait until command executed.
-	}
-	printf("11 = %x\r\n",getPHYDOR());
-	return getPHYDOR();
+		WIZCHIP_WRITE(PHYRR,PHYMDIO_regadr);
+		WIZCHIP_WRITE(PHYACR, PHYACR_READ);
+		while(WIZCHIP_READ(PHYACR));	//wait for command complete
+		return ((uint16_t)WIZCHIP_READ(PHYDOR) << 8) | WIZCHIP_READ(PHYDOR+1);
 }
+
 
 
 /*
