@@ -524,6 +524,7 @@ uint8_t test_buf[]={"ARP Test"};
 					   printf("%d:Opened, Test UDP, port [%d]\r\n", sn, port);
 					   printf("IGMPv1 Multicast Test UDP start\r\n");
 					 //  setSn_MR2(sn,getSn_MR2(sn)|Sn_MR2_UBBLK);
+					   //  setSn_MR2(sn,getSn_MR2(sn)|Sn_MR2_UUBLK);
 
 
 					   if((ret = socket(sn, Sn_MR_UDP, port, SF_MULTI_ENABLE|SF_IGMP_VER1)) != sn)

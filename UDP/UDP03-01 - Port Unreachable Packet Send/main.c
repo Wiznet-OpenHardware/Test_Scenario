@@ -120,6 +120,196 @@ void ExitCris();
 
 unsigned char data_buf[2048];
 
+void set_phy_opmode(uint8_t auto_n, uint8_t spd_n, uint8_t dpx_n)
+{
+	volatile uint16_t i , j;
+	volatile unsigned long linktime;
+    volatile uint8_t linkstat;
+
+	uint8_t opmode, tphycr1;
+	opmode = (auto_n & 0x01);
+	opmode <<= 1;
+	opmode |= (spd_n & 0x01);
+	opmode <<= 1;
+	opmode |= (dpx_n & 0x01);
+
+	printf("\r\nopmode = %02X : %s %d %c\r\n",opmode, (auto_n) ? "Fix" : "Auto", spd_n ? 10:100,(dpx_n) ? 'H' : 'F');
+
+	//FSMCLowSpeed();
+	for(i = 0 ; i < 2000 ; i++);
+
+	while(getVER() != 0x51){printf("*"); for(i=0;i<1000;i++);};
+
+	setPHYCFGR(0x53);
+	setPHYCR0(opmode);
+
+#ifdef PHY_RETRY
+PHY_RESET_RETRY:
+#endif
+	tphycr1 = getPHYCR1();
+	setPHYCFGR(0x53);
+	setPHYCR1(tphycr1 | 0x01 );
+	while(getPHYCR1() & 0x01);
+	for(i = 0 ; i < 3000 ; i++); //200us
+//	while((getPHYCR1() & 0x01) == 0x00)
+//	{
+//		setPHYCR1(tphycr1 | 0x01);
+//	}
+	while(getPHYSR0() & 0x80);
+    //TIM2_settimer();
+	for(i = 0 ; i < 3000 ; i++); //200us
+	while( (getPHYSR0() & 0x01) != 0x01 )
+		{	//printf("test = %x\r\n",getPHYSR0());
+#ifdef PHY_RETRY
+		 if(TIM2_gettimer() > 100)
+		 {
+			 printf("Retry Phy config\r\n");
+			 goto PHY_RESET_RETRY;
+		 }
+#endif
+		}
+	linktime = TIM2_gettimer();
+	linkstat = getPHYSR0();
+	printf("\r\nPHY LINK OK : Stat %d%c, Time = %d.%d\r\n",
+			((linkstat >> 1) & 0x01) ? 10 : 100, ((linkstat >> 2) & 01) ? 'H' : 'F',
+			linktime/10, linktime % 10);
+	while(getVER() != 0x51)
+	{
+		printf("-");
+		for(i=0;i<1000;i++);
+	}
+	//FSMCHighSpeed();
+	for(i=0; i<2000; i++);
+	while(getVER() != 0x51)
+	{
+		printf("-");
+		for(i=0;i<1000;i++);
+	}
+
+}
+
+// auto_n : 0 - auto, 1 - fixed0
+// spd_n : 0 - 100M , 1 - 10M
+// dpx_n : 0 - FDX,   1 - HDX
+void set_phy_mdc(uint8_t auto_n, uint8_t spd_n, uint8_t dpx_n)
+{
+	volatile uint16_t i, j;
+	volatile unsigned long linktime;
+    volatile uint8_t linkstat;
+	uint16_t bmcr;
+//	wiz_mdio_write(0x00, 0x8000); // Reset;
+//	while(wiz_mdio_read(0x00) & 0x8000)
+//	{
+//		for(i=0; i<10000;i++);
+//	}
+	bmcr = wiz_mdio_read(0x00);
+	printf("bmcr=%04X\r\n", bmcr);
+	if(!auto_n)
+	{
+		bmcr = bmcr | (1 << 12);
+		bmcr = bmcr |  (1 << 13);
+		bmcr = bmcr |  (1<<8);
+	}
+	else
+	{
+
+		bmcr = bmcr & (~(1<<12));
+		if(spd_n) bmcr = bmcr & (~(1<<13));
+		else      bmcr = bmcr |  (1 << 13);
+		if(dpx_n) bmcr = bmcr & (~(1<<8));
+		else      bmcr = bmcr |  (1<<8);
+	}
+	printf("\r\BMCR = %04X : %s %d %c\r\n",bmcr, (auto_n) ? "Fix" : "Auto", spd_n ? 10:100,(dpx_n) ? 'H' : 'F');
+//	wiz_mdio_write(0x00, bmcr);
+	wiz_mdio_write(0x00, bmcr | 0x8000);
+	//wiz_mdio_read(0x00);
+	//while(getPHYSR0() & 0x01);
+	TIM2_settimer();
+	while(TIM2_gettimer() < 1);
+	//wiz_mdio_write(0x00, bmcr & ~0x8000);
+	//while(getPHYSR0() & 0x80);
+    TIM2_settimer();
+	while( (getPHYSR0() & 0x01) != 0x01 )
+		{
+#ifdef PHY_RETRY
+		 if(TIM2_gettimer() > 100)
+		 {
+			 printf("Retry Phy config\r\n");
+			 goto PHY_RESET_RETRY;
+		 }
+#endif
+		}
+	linktime = TIM2_gettimer();
+
+    linkstat = getPHYSR0();
+	printf("\r\nPHY LINK OK : Stat %d%c, Time = %d.%d\r\n",
+			((linkstat >> 1) & 0x01) ? 10 : 100, ((linkstat >> 2) & 01) ? 'H' : 'F',
+			linktime/10, linktime % 10);
+}
+
+//0 - Ethernet PHY Power up
+//1 - Ethernet PHY Power Down
+void set_phy_power_mode(uint8_t mode)
+{
+	volatile uint32_t i;
+
+	FSMCLowSpeed();
+	for(i = 0 ; i < 3000 ; i++);
+
+	while(getVER() != 0x51){printf("L"); for(i=0;i<1000;i++);};
+
+	// Power UP
+	if(!mode)
+	{
+		setPHYCFGR(0x53);
+		setPHYCR1(getPHYCR1() & ~(0x20));
+		for(i = 0 ; i < 3000 ; i++);
+		FSMCHighSpeed();
+		for(i = 0 ; i < 3000 ; i++);
+		while(getVER() != 0x51){printf("H"); for(i=0;i<1000;i++);};
+		printf("\r\nEthernet Power UP!!!!!\r\n");
+	}
+	else
+	{
+		setPHYCFGR(0x53);
+		setPHYCR1(getPHYCR1() | (0x20));
+		for(i = 0 ; i < 3000 ; i++);
+		while(getVER() != 0x51){printf("L"); for(i=0;i<1000;i++);};
+		printf("\r\nEthernet Power DOWN!!!!!\r\n");
+	}
+}
+
+//0 - System Clock 100MHz
+//1 - System Clock 25MHz
+void set_sysclock_mode(uint8_t mode)
+{
+	volatile uint32_t i;
+
+	FSMCLowSpeed();
+	for(i = 0 ; i < 3000 ; i++);
+
+	while(getVER() != 0x51){printf("L"); for(i=0;i<1000;i++);};
+
+	// 100MHz
+	if(!mode)
+	{
+		setCHIPCFGR(0xCE);
+		setMR2(getMR2() & ~(0x80));
+		for(i = 0 ; i < 3000 ; i++);
+		FSMCHighSpeed();
+		for(i = 0 ; i < 3000 ; i++);
+		while(getVER() != 0x51){printf("H"); for(i=0;i<1000;i++);};
+		printf("\r\nSystem Clock changed to 100MHz!!!!!\r\n");
+	}
+	else
+	{
+		setCHIPCFGR(0xCE);
+		setMR2(getMR2() | (0x80));
+		for(i = 0 ; i < 3000 ; i++);
+		while(getVER() != 0x51){printf("H"); for(i=0;i<1000;i++);};
+		printf("\r\nSystem Clock changed to 25MHz!!!!!\r\n");
+	}
+}
 
 
 int main(void)
@@ -218,9 +408,10 @@ int main(void)
 	for(i = 0 ; i < 2000 ; i++);
 
 	resetDeassert();
-	while(1){
-		if((getPHYSR()&0x01)==0x01)
-			break;
+
+	for(i = 0 ; i < 200 ; i++)
+	{
+		for( j = 0 ; j < 10000 ; j++){}
 	}
 
 
@@ -251,7 +442,35 @@ int main(void)
 
 #endif
 
+#define	PHY_AUTO
+#ifndef PHY_AUTO
+	setPHYCFGR(0x53);
+	setPHYCR0(0x07); // 10H
 
+	//setPHYCR0(0x06); // 10F
+	//setPHYCR0(0x04); // 100F
+	//setPHYCR0(0x05); //100H
+//	setPHYCR1(getPHYCR1()&0xfe);
+	uint8_t tphycr1 = getPHYCR1();
+	setPHYCR1(tphycr1 & 0xFE );
+	while(getPHYCR1() & 0x01);
+
+//	FSMCLowSpeed();
+	for(i = 0 ; i < 10000 ; i++)
+	{
+		for( j = 0 ; j < 10000 ; j++){}
+	}
+	while((getPHYCR1() & 0x01) == 0x00)
+	{
+		setPHYCFGR(0x53);
+		setPHYCR1(tphycr1 | 0x01);
+	}
+#endif
+	FSMCHighSpeed();
+	for(i = 0 ; i < 10000 ; i++)
+	{
+		for( j = 0 ; j < 5000 ; j++){}
+	}
 
 
 	printf(" PHYMODE:%02x\r\n",getPHYACR());
