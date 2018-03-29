@@ -119,8 +119,6 @@ void ExitCris();
 
 
 unsigned char data_buf[2048];
-
-
 void set_phy_opmode(uint8_t auto_n, uint8_t spd_n, uint8_t dpx_n)
 {
 	volatile uint16_t i , j;
@@ -312,6 +310,7 @@ void set_sysclock_mode(uint8_t mode)
 	}
 }
 
+
 int main(void)
 
 {
@@ -403,6 +402,7 @@ int main(void)
 
 
 
+
 	resetAssert();
 
 	for(i = 0 ; i < 2000 ; i++);
@@ -482,6 +482,7 @@ int main(void)
 
 
 
+
 	printf("Register value after W5100S initialize!\r\n");
 
 	print_network_information();
@@ -489,39 +490,34 @@ int main(void)
 ///////////////////////////////////////////////////////
 /////////// Enter TEST Scenario //////////////////////
 //////////////////////////////////////////////////////
-uint8_t test_buf[]={"ARP Test"};
-		uint8_t udp_destip[4] = {192,168,0,200};
-		uint16_t udp_destmac[6] = {0xFF,0xAA,0x14,0xE7,0x77,0xBF};
-		uint16_t udp_destport = 5000;
-		uint16_t port = 3000;
-		uint8_t dst_ip[4];
-		uint8_t dst_mac[6];
+	uint8_t test_buf[]={"Subnet broadcast Test"};
+	uint8_t udp_destip[4] = {192,168,0,255};
+	uint16_t udp_destport = 5000;
+	uint16_t port = 3000;
+	uint8_t dst_ip[4];
+	uint8_t dst_mac[6];
 
 
+	while(1){
+		   switch(getSn_SR(0))
+		    {
+		        case SOCK_CLOSED:
+		        	//setSn_MR(0,getSn_MR(0)|0x80);
 
-		while(1){
-			   switch(getSn_SR(0))
-			    {
-			        case SOCK_CLOSED:
-			        	setSn_IMR(0,0xff);
-			        	ret = socket(0, Sn_MR_UDP , port, 0x00);
-			        	printf("ret = %d\r\n",ret);
-			        	if(ret == -1) break;
+		            socket(0, Sn_MR_UDP, port, 0x00);
+		            break;
+		        case SOCK_UDP:
+		          	printf("getSn_SR(0) = %x\r\n",getSn_SR(0));
+		            sendto(0, test_buf, sizeof(test_buf-1), udp_destip, udp_destport);
+		            getSn_DIPR(0,dst_ip);
+		            getSn_DHAR(0,dst_mac);
+		            printf("Dst_addr = %d,%d,%d,%d\r\n",dst_ip[0],dst_ip[1],dst_ip[2],dst_ip[3]);
+		            printf(" Dst_Mac = %x:%x:%x:%x:%x:%x\r\n",dst_mac[0],dst_mac[1],dst_mac[2],dst_mac[3],dst_mac[4],dst_mac[5]);
+		            while(1);
+		            break;
 
-			            break;
-			        case SOCK_UDP:
-			            ret = sendto(0, test_buf, sizeof(test_buf), udp_destip, udp_destport);
-			        	if(ret < 0)
-			            {
-			                printf("%d: sendto error. %ld\r\n",0, ret);
-			                close(0);
-			                return 2;
-			            }
-			            break;
-
-			    }
-		}
-
+		    }
+	}
 /////////////////////////////////////////////////////////////////
 
 
