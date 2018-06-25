@@ -507,7 +507,7 @@ uint8_t test_buf[]={"ARP Test"};
 			    {
 			        case SOCK_CLOSED:
 
-			        	//setMR2(MR2_UDPFARP);
+			        	setMR2(MR2_UDPFARP|getMR2());
 
 			        	ret = socket(0, Sn_MR_UDP , port, 0x00);
 			        	if(ret == -1) break;

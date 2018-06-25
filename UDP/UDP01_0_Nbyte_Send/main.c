@@ -379,7 +379,7 @@ int main(void)
 
 	/* Indirect bus method callback registration */
 
-	//reg_wizchip_bus_cbfunc(busReadByte, busWriteByte);
+	reg_wizchip_bus_cbfunc(busReadByte, busWriteByte);
 
 #endif
 
