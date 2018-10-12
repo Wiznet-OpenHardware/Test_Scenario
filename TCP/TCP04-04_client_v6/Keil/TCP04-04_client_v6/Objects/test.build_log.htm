@@ -1,0 +1,130 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: •ÏVision V5.24.2.0
+Copyright (C) 2017 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: dkay jin, wiz, LIC=D0DZ9-46YC1-QCJJ5-G5763-41UVM-3FP9T
+ 
+Tool Versions:
+Toolchain:       MDK-ARM Plus  Version: 5.24.1
+Toolchain Path:  D:\Tool\Keil_v5\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.06 update 5 (build 528)
+Assembler:       Armasm.exe V5.06 update 5 (build 528)
+Linker/Locator:  ArmLink.exe V5.06 update 5 (build 528)
+Library Manager: ArmAr.exe V5.06 update 5 (build 528)
+Hex Converter:   FromElf.exe V5.06 update 5 (build 528)
+CPU DLL:         SARMCM3.DLL V5.24.1
+Dialog DLL:      DCM.DLL V1.16.0.0
+Target DLL:      UL2CM3.DLL V1.160.3.0
+Dialog DLL:      TCM.DLL V1.32.0.0
+ 
+<h2>Project:</h2>
+D:\jdh_work\W6100\SW_final\W6100_TestScenario-master\TCP04-04_client_v6\Keil\TCP04-04_client_v6\test.uvprojx
+Project File Date:  10/12/2018
+
+<h2>Output:</h2>
+*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\Tool\Keil_v5\ARM\ARMCC\Bin'
+Rebuild target 'Target 1'
+assembling startup_stm32f4xx.s...
+compiling stm32f4xx_gpio.c...
+compiling system_stm32f4xx.c...
+compiling stm32f4xx_exti.c...
+compiling misc.c...
+compiling stm32f4xx_fsmc.c...
+compiling stm32f4xx_rcc.c...
+compiling stm32f4xx_spi.c...
+compiling loopback.c...
+compiling wizchip_conf.c...
+compiling w6100.c...
+..\..\Libraries\io6Library\Ethernet\W6100\w6100.c(51): warning:  #177-D: variable "spi_data"  was declared but never referenced
+     uint8_t spi_data[4];
+..\..\Libraries\io6Library\Ethernet\W6100\w6100.c(91): warning:  #177-D: variable "spi_data"  was declared but never referenced
+     uint8_t spi_data[3];
+..\..\Libraries\io6Library\Ethernet\W6100\w6100.c(130): warning:  #177-D: variable "spi_data"  was declared but never referenced
+     uint8_t spi_data[3];
+..\..\Libraries\io6Library\Ethernet\W6100\w6100.c(171): warning:  #177-D: variable "spi_data"  was declared but never referenced
+     uint8_t spi_data[3];
+..\..\Libraries\io6Library\Ethernet\W6100\w6100.c: 4 warnings, 0 errors
+compiling socket.c...
+compiling stm32f4xx_syscfg.c...
+compiling stm32f4xx_usart.c...
+compiling stm32f4xx_tim.c...
+compiling trng.c...
+compiling usart.c...
+compiling main.c...
+main.c(187): warning:  #177-D: variable "ret"  was declared but never referenced
+  	int ret, i = 0;
+main.c(187): warning:  #177-D: variable "i"  was declared but never referenced
+  	int ret, i = 0;
+main.c(188): warning:  #177-D: variable "s"  was declared but never referenced
+  	  int s = 0;//, s0 = 0;
+main.c(190): warning:  #177-D: variable "trng_value"  was declared but never referenced
+  		uint32_t trng_value;
+main.c(191): warning:  #177-D: variable "uart_menu"  was declared but never referenced
+  		uint8_t uart_menu;
+main.c(413): warning:  #1-D: last line of file ends without a newline
+  }
+main.c: 6 warnings, 0 errors
+compiling W6100RelFuntioncs.c...
+compiling halConfiguration.c...
+compiling stm32f4xx_it.c...
+compiling tcp_test.c...
+tcp_test.c(118): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len, test_buf_len=16;
+tcp_test.c(191): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len, test_buf_len=16;
+tcp_test.c(272): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len;
+tcp_test.c(366): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len;
+tcp_test.c(455): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len;
+tcp_test.c(557): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len=16;
+tcp_test.c(654): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len, test_buf_len=16;
+tcp_test.c(1188): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len=16;
+tcp_test.c(1192): warning:  #550-D: variable "size"  was set but never used
+  		uint16_t size = 0;
+tcp_test.c(1287): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len;
+tcp_test.c(1389): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len, test_buf_len=16;
+tcp_test.c(1493): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len, test_buf_len=16;
+tcp_test.c(1493): warning:  #177-D: variable "test_buf_len"  was declared but never referenced
+      uint16 received_len, test_buf_len=16;
+tcp_test.c(1586): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len, test_buf_len=16;
+tcp_test.c(1764): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len, test_buf_len=16;
+tcp_test.c(1938): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len=16;
+tcp_test.c(2040): warning:  #550-D: variable "received_len"  was set but never used
+      uint16 received_len;
+tcp_test.c: 17 warnings, 0 errors
+linking...
+Program Size: Code=24368 RO-data=912 RW-data=284 ZI-data=3724  
+FromELF: creating hex file...
+After Build - User command #1: D:\Tool\Keil_v5\\ARM\ARMCC\BIN\fromelf.exe D:\jdh_work\W6100\SW_final\W6100_TestScenario-master\TCP04-04_client_v6\Keil\TCP04-04_client_v6\Objects\test.axf --vhx --8x1 --output main.hex;fromelf --bin -o "D:\jdh_work\W6100\SW_final\W6100_TestScenario-master\TCP04-04_client_v6\Keil\TCP04-04_client_v6\Objects\test.bin" "D:\jdh_work\W6100\SW_final\W6100_TestScenario-master\TCP04-04_client_v6\Keil\TCP04-04_client_v6\Objects\test.axf"
+".\Objects\test.axf" - 0 Error(s), 27 Warning(s).
+
+<h2>Software Packages used:</h2>
+
+Package Vendor: Keil
+                http://www.keil.com/pack/Keil.STM32F4xx_DFP.2.12.0.pack
+                Keil.STM32F4xx_DFP.2.12.0
+                STMicroelectronics STM32F4 Series Device Support, Drivers and Examples
+
+<h2>Collection of Component include folders:</h2>
+  .\RTE\_Target_1
+  D:\Tool\Keil_v5\ARM\PACK\Keil\STM32F4xx_DFP\2.12.0\Drivers\CMSIS\Device\ST\STM32F4xx\Include
+
+<h2>Collection of Component Files used:</h2>
+Build Time Elapsed:  00:00:03
+</pre>
+</body>
+</html>
